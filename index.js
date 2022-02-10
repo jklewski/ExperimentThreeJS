@@ -104,7 +104,7 @@ image.onload = function () {
     material.encoding = THREE.sRGBEncoding;
     //load .glb model
     var loader = new GLTFLoader()
-    loader.load('/assets/TestSphere.glb', function (glb) {
+    loader.load('./assets/TestSphere.glb', function (glb) {
         console.log(glb)
         var root = glb.scene;
         //overwrite existing mesh with manipulated material
