@@ -16,10 +16,16 @@ const canvas = document.querySelector('.webgl')
 //start scene
 const scene = new THREE.Scene()
 //define light
-const light = new THREE.DirectionalLight(0xffffff, 1)
-light.position.set(2, 2, 5)
-light.intensity = 2
-scene.add(light)
+//const light = new THREE.DirectionalLight(0xffffff, 1)
+//light.position.set(2, 2, 5)
+//light.intensity = 1
+//scene.add(light)
+var hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, .7);
+scene.add(hemLight);
+//const light2 = new THREE.AmbientLight(0xffffff,5)
+//light2.position.set(1, 1, 3)
+//light2.intensity = 0.1
+//scene.add(light2)
 
 //window size
 const sizes = {
@@ -59,7 +65,7 @@ const canvasDose = document.createElement("canvas");
 canvasDose.width = 1024;
 canvasDose.height = 1024;
 const ctxDose = canvasDose.getContext("2d");
-var grdDose = ctxDose.createLinearGradient(0, 0, 0, 50)
+var grdDose = ctxDose.createLinearGradient(0, 0, 0, 10)
 grdDose.addColorStop(0, "#000000");
 grdDose.addColorStop(1, "white");
 ctxDose.fillStyle = grdDose;
@@ -86,12 +92,12 @@ image.onload = function () {
     //TODO: change this to color based on data from InnoRenew
     var value = []
     for (let i = 0; i < imdata.data.length; i += 4) {
-        value = 10*imdataOriginalDose[i]/256
-        let idHigh = imdata.data[i] + 256 * Math.ceil(value)
-        let idLow = imdata.data[i] + 256 * Math.floor(value)
-        data[i] = wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value));
-        data[i + 1] = wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value));
-        data[i + 2] = 255//wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value));
+        value = 0//*imdataOriginalDose[i]/255
+        let idHigh = imdata.data[i] + 255 * Math.ceil(value)
+        let idLow = imdata.data[i] + 255 * Math.floor(value)
+        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
+        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
+        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
         data[i + 3] = 255
     }
     // Use the buffer to create a texture, using DataTExture
@@ -104,13 +110,14 @@ image.onload = function () {
     material.encoding = THREE.sRGBEncoding;
     //load .glb model
     var loader = new GLTFLoader()
-    loader.load('./assets/TestSphere5.glb', function (glb) {
+    loader.load('./assets/woodTest1.glb', function (glb) {
         console.log(glb)
         var root = glb.scene;
         //overwrite existing mesh with manipulated material
         root.traverse((o) => {
             if (o.isMesh) {
-                o.material.map = texture//material//.emissive = new THREE.Color( 0x0000ff );
+                o.material.map = texture//
+                //material.emissive = new THREE.Color( 0xffffff );
             }
         });
         //adjust scale to fit canvas
@@ -130,6 +137,6 @@ image.onload = function () {
 }
 
 //set im source.. 
-image.src = "./assets/SphereTest10.jpg"
+image.src = "./assets/woodTest1.jpg"
 
 //script will now jump back to onload function --^
