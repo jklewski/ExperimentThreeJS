@@ -59,7 +59,7 @@ const canvasDose = document.createElement("canvas");
 canvasDose.width = 1024;
 canvasDose.height = 1024;
 const ctxDose = canvasDose.getContext("2d");
-var grdDose = ctxDose.createLinearGradient(0, 0, 0, 1000)
+var grdDose = ctxDose.createLinearGradient(0, 0, 0, 50)
 grdDose.addColorStop(0, "#000000");
 grdDose.addColorStop(1, "white");
 ctxDose.fillStyle = grdDose;
@@ -91,8 +91,8 @@ image.onload = function () {
         let idLow = imdata.data[i] + 256 * Math.floor(value)
         data[i] = wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value));
         data[i + 1] = wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value));
-        data[i + 2] = wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value));
-        data[i + 3] = 256
+        data[i + 2] = 255//wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value));
+        data[i + 3] = 255
     }
     // Use the buffer to create a texture, using DataTExture
     // Make sure texture is updated
@@ -104,17 +104,17 @@ image.onload = function () {
     material.encoding = THREE.sRGBEncoding;
     //load .glb model
     var loader = new GLTFLoader()
-    loader.load('./assets/TestSphere.glb', function (glb) {
+    loader.load('./assets/TestSphere5.glb', function (glb) {
         console.log(glb)
         var root = glb.scene;
         //overwrite existing mesh with manipulated material
         root.traverse((o) => {
             if (o.isMesh) {
-                o.material = material//.emissive = new THREE.Color( 0x0000ff );
+                o.material.map = texture//material//.emissive = new THREE.Color( 0x0000ff );
             }
         });
         //adjust scale to fit canvas
-        root.scale.set(0.4, 0.4, 0.4)
+        root.scale.set(1, 1, 1)
         //add object to scene
         scene.add(root)
         //render single frame
@@ -130,6 +130,6 @@ image.onload = function () {
 }
 
 //set im source.. 
-image.src = "./assets/TestSphereTextures.jpg"
+image.src = "./assets/SphereTest10.jpg"
 
 //script will now jump back to onload function --^
