@@ -2,6 +2,36 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.120.0/build/three.module
 import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/controls/OrbitControls.js'
 
+// create gui
+var gui = new dat.GUI();
+// add a range controller
+var weathering = {time: 5};
+var species = {name: 'spruce'};
+gui.add(weathering, 'time', 0, 100);
+gui.add(species, 'name');
+
+gui.__controllers[0].onChange(function() {
+    console.log('test')
+    var imdata = ctx.getImageData(0, 0, 1024, 1024)
+    const width = 1024;
+    const height = 1024;
+    const size = width * height;
+    var data = new Uint8Array(4 * size);
+
+    var value = this.object.time/10
+    for (let i = 0; i < imdata.data.length; i += 4) {
+        let idHigh = imdata.data[i] + 255 * Math.ceil(value)
+        let idLow = imdata.data[i] + 255 * Math.floor(value)
+        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
+        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
+        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
+        data[i + 3] = 255
+    }
+    // Use the buffer to create a texture, using DataTExture
+    // Make sure texture is updated
+    scene.children[2].children[0].material.map.image.data = data
+    scene.children[2].children[0].material.map.needsUpdate = true
+})
 // create a buffer with color data. A buffer is just an array representing pixels, for example Uint8Array
 // https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView
 
@@ -87,7 +117,7 @@ image.onload = function () {
     const width = 1024;
     const height = 1024;
     const size = width * height;
-    const data = new Uint8Array(4 * size);
+    var data = new Uint8Array(4 * size);
     //Manipulate color here... creating a bufferarray for image data
     //TODO: change this to color based on data from InnoRenew
     var value = []
