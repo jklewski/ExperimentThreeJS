@@ -105,7 +105,7 @@ var imageDose = new Image()
 imageDose.onload = function () {
     ctxDose.drawImage(imageDose, 0, 0, 1024, 1024);
 }
-imageDose.src = 'assets/InnoRenewDoseMap.jpg'
+imageDose.src = './assets/InnoRenewDoseMap.jpg'
 document.body.appendChild(canvasDose) //This is only shown in dev
 var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
 var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
