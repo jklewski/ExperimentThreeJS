@@ -18,8 +18,14 @@ gui.__controllers[0].onChange(function() {
     const size = width * height;
     var data = new Uint8Array(4 * size);
 
-    var value = this.object.time/10
+
+    var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
+    var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
+    //var value = this.object.time/10
+    var value = [];
     for (let i = 0; i < imdata.data.length; i += 4) {
+    //calculate dose at pixel i
+        value = (this.object.time/100) * (10*imdataOriginalDose[i]/255)
         let idHigh = imdata.data[i] + 255 * Math.ceil(value)
         let idLow = imdata.data[i] + 255 * Math.floor(value)
         data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
@@ -29,8 +35,8 @@ gui.__controllers[0].onChange(function() {
     }
     // Use the buffer to create a texture, using DataTExture
     // Make sure texture is updated
-    scene.children[2].children[0].material.map.image.data = data
-    scene.children[2].children[0].material.map.needsUpdate = true
+    scene.children[3].children[0].material.map.image.data = data
+    scene.children[3].children[0].material.map.needsUpdate = true
 })
 // create a buffer with color data. A buffer is just an array representing pixels, for example Uint8Array
 // https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView
@@ -95,14 +101,14 @@ const canvasDose = document.createElement("canvas");
 canvasDose.width = 1024;
 canvasDose.height = 1024;
 const ctxDose = canvasDose.getContext("2d");
-var grdDose = ctxDose.createLinearGradient(0, 0, 0, 10)
-grdDose.addColorStop(0, "#000000");
-grdDose.addColorStop(1, "white");
-ctxDose.fillStyle = grdDose;
-ctxDose.fillRect(0, 0, 1024, 1024);
+var imageDose = new Image()
+imageDose.onload = function () {
+    ctxDose.drawImage(imageDose, 0, 0, 1024, 1024);
+}
+imageDose.src = 'assets/InnoRenewDoseMap.jpg'
+document.body.appendChild(canvasDose) //This is only shown in dev
 var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
 var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
-document.body.appendChild(canvasDose) //This is only shown in dev
 
 //create empty image
 var image = new Image()
@@ -122,7 +128,7 @@ image.onload = function () {
     //TODO: change this to color based on data from InnoRenew
     var value = []
     for (let i = 0; i < imdata.data.length; i += 4) {
-        value = 0//*imdataOriginalDose[i]/255
+        value = (imdataOriginalDose[i]/255)*10
         let idHigh = imdata.data[i] + 255 * Math.ceil(value)
         let idLow = imdata.data[i] + 255 * Math.floor(value)
         data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
@@ -140,7 +146,7 @@ image.onload = function () {
     material.encoding = THREE.sRGBEncoding;
     //load .glb model
     var loader = new GLTFLoader()
-    loader.load('./assets/woodTest1.glb', function (glb) {
+    loader.load('./assets/InnoRenewHouse.glb', function (glb) {
         console.log(glb)
         var root = glb.scene;
         //overwrite existing mesh with manipulated material
@@ -167,6 +173,16 @@ image.onload = function () {
 }
 
 //set im source.. 
-image.src = "./assets/woodTest1.jpg"
+image.src = "./assets/InnoRenewTextures.png"
 
+//Load misc other assets
+var loader2 = new GLTFLoader()
+loader2.load('./assets/InnoRenewHouse_misc.glb', function (glb) {
+    console.log(glb)
+    var root2 = glb.scene;
+    //adjust scale to fit canvas
+    root2.scale.set(1, 1, 1)
+    //add object to scene
+    scene.add(root2)
+})
 //script will now jump back to onload function --^
