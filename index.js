@@ -2,7 +2,8 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.120.0/build/three.module
 import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/controls/OrbitControls.js'
 //initiate some global variables
-var root = []
+var root = [] //main 3dobject
+var root2 = [] //secondary 3dobjects
 var texture = []
 var imdataDose = []
 var imdataOriginalDose = []
@@ -35,6 +36,7 @@ dropdown1.onChange(function () {
 
 dropdown2.onChange(function () {
     scene.remove(root)
+    scene.remove(root2)    
     if (dropdown2.object.Model == 'Wall Model') {var id = 0}
     if (dropdown2.object.Model == 'InnoRenew House') {var id = 1}
     loadNewTexture(id)
@@ -165,7 +167,7 @@ function loadNewAssets(id) {
 var loader2 = new GLTFLoader()
 loader2.load('./assets/'+model[id].Assets, function (glb) {
     console.log(glb)
-    var root2 = glb.scene;
+    root2 = glb.scene;
     //adjust scale to fit canvas
     root2.scale.set(1, 1, 1)
     //add object to scene
