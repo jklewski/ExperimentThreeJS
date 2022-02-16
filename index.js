@@ -1,169 +1,157 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.120.0/build/three.module.js'
 import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/controls/OrbitControls.js'
+//initiate some global variables
+var root = []
+var texture = []
+var imdataDose = []
+var imdataOriginalDose = []
+//define model variations
+var model = [];
+model[0] = {Texture:'WallTextures.png',
+            Dosemap:'WallDoseMap.png',
+            Model:'Wallmodel.glb',
+            Assets:[]}
+model[1] = {Texture:'InnoRenewTextures.png',
+            Dosemap:'InnoRenewDoseMap.jpg',
+            Model:'InnoRenewHouse.glb',
+            Assets:'InnoRenewHouse_misc.glb'}
 
 // create gui
-var gui = new dat.GUI();
+var gui = new dat.GUI({ autoPlace: false, width: 500 });
+gui.domElement.id = 'gui';
+gui_container.appendChild(gui.domElement);
 // add a range controller
-var weathering = {time: 5};
-var species = {name: 'spruce'};
-gui.add(weathering, 'time', 0, 100);
-gui.add(species, 'name');
+var weathering = { Time: 0 };
+var species = { Product: 'Spruce' };
+var models = { Model: 'Wall Model' };
+var slider1 = gui.add(weathering, 'Time', 0, 100);
+var dropdown1 = gui.add(species, 'Product', ["Spruce", "Pine", "Beech"])
+var dropdown2 = gui.add(models, 'Model', ["Wall Model", "InnoRenew House", "placeholder"])
 
-gui.__controllers[0].onChange(function() {
-    console.log('test')
+dropdown1.onChange(function () {
+    wclr = colorMap(this.object.name)
+})
+
+dropdown2.onChange(function () {
+    scene.remove(root)
+    if (dropdown2.object.Model == 'Wall Model') {var id = 0}
+    if (dropdown2.object.Model == 'InnoRenew House') {var id = 1}
+    loadNewTexture(id)
+    loadNewModel(id)  
+    //load any other assets if available
+    if (model[1].Assets.length>0) {
+        loadNewAssets(id)
+    }
+})
+
+slider1.onChange(function () {
+    var data = new Uint8Array(4 * 1024 * 1024);
     var imdata = ctx.getImageData(0, 0, 1024, 1024)
-    const width = 1024;
-    const height = 1024;
-    const size = width * height;
-    var data = new Uint8Array(4 * size);
-
-
     var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
     var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
-    //var value = this.object.time/10
-    var value = [];
-    for (let i = 0; i < imdata.data.length; i += 4) {
-    //calculate dose at pixel i
-        value = (this.object.time/100) * (10*imdataOriginalDose[i]/255)
-        let idHigh = imdata.data[i] + 255 * Math.ceil(value)
-        let idLow = imdata.data[i] + 255 * Math.floor(value)
-        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 3] = 255
-    }
-    // Use the buffer to create a texture, using DataTExture
-    // Make sure texture is updated
-    scene.children[3].children[0].material.map.image.data = data
-    scene.children[3].children[0].material.map.needsUpdate = true
+    var time = this.object.Time;
+    data = mapColor(imdata, imdataOriginalDose, time)
+    root.children[0].material.map.image.data = data
+    root.children[0].material.map.needsUpdate = true
 })
-// create a buffer with color data. A buffer is just an array representing pixels, for example Uint8Array
-// https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView
-
-// DONE: load 3d object + apply texture image separately 
-// DONE: load texture image and load to buffer
-// TODO: use apply color to buffer from species data
-// TODO: load dose map and use to apply color
-
 
 //select canvas from index.html
 const canvas = document.querySelector('.webgl')
 //start scene
 const scene = new THREE.Scene()
-//define light
-//const light = new THREE.DirectionalLight(0xffffff, 1)
-//light.position.set(2, 2, 5)
-//light.intensity = 1
-//scene.add(light)
-var hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, .7);
+//light
+var hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, .4);
 scene.add(hemLight);
 //const light2 = new THREE.AmbientLight(0xffffff,5)
 //light2.position.set(1, 1, 3)
 //light2.intensity = 0.1
 //scene.add(light2)
+const light = new THREE.PointLight(0xffffff, 5, 100);
+light.position.set(50, 50, 50);
+scene.add(light);
 
 //window size
+const canvasContainer = document.getElementById('modelContainer')
 const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: canvasContainer.width * 4,
+    height: canvasContainer.height * 4
 }
 //create and configure camera
+
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(0, 0, 3)
+camera.position.set(5, 1, 1)
+
 scene.add(camera)
 //create and configure renderer
 const renderer = new THREE.WebGL1Renderer({
     canvas: canvas
 })
 renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+//renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true
 //create orbit controls
 const controls = new OrbitControls(camera, renderer.domElement);
-//define animate function
-function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-}
 
-//add the actual model and textures
-var canvasTemp = document.createElement("canvas"); 
+//add 2 canvasesthe for texture and dosemap
+var canvasTemp = document.createElement("canvas");
 canvasTemp.width = 1024;
 canvasTemp.height = 1024;
 var ctx = canvasTemp.getContext("2d");
-//add canvas to body if inspect 
-document.body.appendChild(canvasTemp) //This is only shown in dev
-
-//add the dosemap, should have same dimension as texture
-const canvasDose = document.createElement("canvas"); 
+var canvasDose = document.createElement("canvas");
 canvasDose.width = 1024;
 canvasDose.height = 1024;
-const ctxDose = canvasDose.getContext("2d");
-var imageDose = new Image()
-imageDose.onload = function () {
-    ctxDose.drawImage(imageDose, 0, 0, 1024, 1024);
-}
-imageDose.src = './assets/InnoRenewDoseMap.jpg'
-document.body.appendChild(canvasDose) //This is only shown in dev
-var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
-var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
+var ctxDose = canvasDose.getContext("2d");
+//add canvas to body if inspect 
+//document.body.appendChild(canvasTemp) //This is only shown in dev
 
-//create empty image
-var image = new Image()
-
-//Put entire block of material creation in onload function because.. gave up trying to force wait... 
-//TODO: add await function to texture onload.
-image.onload = function () {
-    //draw image on temporary canvas
-    ctx.drawImage(image, 0, 0, 1024, 1024);
-    //get image data
-    var imdata = ctx.getImageData(0, 0, 1024, 1024)
-    const width = 1024;
-    const height = 1024;
-    const size = width * height;
-    var data = new Uint8Array(4 * size);
-    //Manipulate color here... creating a bufferarray for image data
-    //TODO: change this to color based on data from InnoRenew
-    var value = []
-    for (let i = 0; i < imdata.data.length; i += 4) {
-        value = (imdataOriginalDose[i]/255)*10
-        let idHigh = imdata.data[i] + 255 * Math.ceil(value)
-        let idLow = imdata.data[i] + 255 * Math.floor(value)
-        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 3] = 255
+//Create function for loading a new texture (and run once)
+function loadNewTexture(id) {
+    //clear both canvas
+    ctx.clearRect(0, 0, 1024, 1024);
+    ctxDose.clearRect(0, 0, 1024, 1024); 
+    //Draw dosemap on canvas
+    var imageDose = new Image()
+    imageDose.onload = function () {
+        ctxDose.drawImage(imageDose, 0, 0, 1024, 1024);
     }
-    // Use the buffer to create a texture, using DataTExture
-    // Make sure texture is updated
-    var texture = new THREE.DataTexture(data, width, height);
-    texture.flipY = false
-    texture.needsUpdate = true;
-    // create new basic material and apply texture
-    var material = new THREE.MeshBasicMaterial({ map: texture });
-    material.encoding = THREE.sRGBEncoding;
-    //load .glb model
+    imageDose.src = './assets/'+model[id].Dosemap;
+    //Draw texture on canvas, calculate color and create texture
+    var image = new Image()
+    image.onload = function () {
+        ctx.drawImage(image, 0, 0, 1024, 1024);
+        var data = new Uint8Array(4 * 1024 * 1024);
+        var imdata = ctx.getImageData(0, 0, 1024, 1024);
+        var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height);
+        imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); 
+        var time = 0;
+        data = mapColor(imdata, imdataOriginalDose, time);
+        texture = new THREE.DataTexture(data, 1024, 1024);
+        texture.flipY = false
+        texture.needsUpdate = true;
+    }
+    image.src = "./assets/" + model[id].Texture
+}
+loadNewTexture(0)
+
+//Create function for loading a new model (and run once)
+function loadNewModel(id) {
+
     var loader = new GLTFLoader()
-    loader.load('./assets/InnoRenewHouse.glb', function (glb) {
+    loader.load('./assets/' + model[id].Model, function (glb) {
         console.log(glb)
-        var root = glb.scene;
-        //overwrite existing mesh with manipulated material
-        root.traverse((o) => {
-            if (o.isMesh) {
-                o.material.map = texture//
-                //material.emissive = new THREE.Color( 0xffffff );
-            }
-        });
+        root = glb.scene;
         //adjust scale to fit canvas
         root.scale.set(1, 1, 1)
         //add object to scene
+        root.traverse((o) => {
+            if (o.isMesh) {
+                o.material.map = texture
+            }
+        });
         scene.add(root)
         //render single frame
         renderer.render(scene, camera)
-        //animage to allow orbit
-        animate()
         //some extra arguments for loader...
     }, function (xhr) {
         console.log((xhr.loaded / xhr.total * 100) + "% loaded")
@@ -171,13 +159,11 @@ image.onload = function () {
         console.log("an error occured)")
     })
 }
+loadNewModel(0)
 
-//set im source.. 
-image.src = "./assets/InnoRenewTextures.png"
-
-//Load misc other assets
+function loadNewAssets(id) {
 var loader2 = new GLTFLoader()
-loader2.load('./assets/InnoRenewHouse_misc.glb', function (glb) {
+loader2.load('./assets/'+model[id].Assets, function (glb) {
     console.log(glb)
     var root2 = glb.scene;
     //adjust scale to fit canvas
@@ -185,4 +171,30 @@ loader2.load('./assets/InnoRenewHouse_misc.glb', function (glb) {
     //add object to scene
     scene.add(root2)
 })
-//script will now jump back to onload function --^
+}
+
+function resizeCanvasToDisplaySize() {
+    const canvas = renderer.domElement;
+    // look up the size the canvas is being displayed
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+
+    // adjust displayBuffer size to match
+    if (canvas.width !== width || canvas.height !== height) {
+        // you must pass false here or three.js sadly fights the browser
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        // update any render target sizes here
+    }
+}
+
+//define animate function
+function animate() {
+    resizeCanvasToDisplaySize()
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+animate()
