@@ -11,7 +11,7 @@ var imdataOriginalDose = []
 var model = [];
 model[0] = {Texture:'WallTextures.png',
             Dosemap:'WallDoseMap.png',
-            Model:'Wallmodel.glb',
+            Model:'WallModel.glb',
             Assets:[]}
 model[1] = {Texture:'InnoRenewTextures.png',
             Dosemap:'InnoRenewDoseMap.jpg',
@@ -24,14 +24,20 @@ gui.domElement.id = 'gui';
 gui_container.appendChild(gui.domElement);
 // add a range controller
 var weathering = { Time: 0 };
-var species = { Product: 'Spruce' };
+var species = { Product: allNames[0]};
 var models = { Model: 'Wall Model' };
 var slider1 = gui.add(weathering, 'Time', 0, 100);
-var dropdown1 = gui.add(species, 'Product', ["Spruce", "Pine", "Beech"])
+var dropdown1 = gui.add(species, 'Product', allNames)
 var dropdown2 = gui.add(models, 'Model', ["Wall Model", "InnoRenew House", "placeholder"])
 
 dropdown1.onChange(function () {
     wclr = colorMap(this.object.name)
+    var data = new Uint8Array(4 * 1024 * 1024);
+    var imdata = ctx.getImageData(0, 0, 1024, 1024)
+    var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
+    var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
+    var time = this.object.Time;
+    data = mapColor(imdata, imdataOriginalDose, time)
 })
 
 dropdown2.onChange(function () {
