@@ -31,13 +31,16 @@ var dropdown1 = gui.add(species, 'Product', allNames)
 var dropdown2 = gui.add(models, 'Model', ["Wall Model", "InnoRenew House", "placeholder"])
 
 dropdown1.onChange(function () {
-    wclr = colorMap(this.object.name)
+    out = colorMap(this.object.Product)
+    wclr = out[0];
     var data = new Uint8Array(4 * 1024 * 1024);
     var imdata = ctx.getImageData(0, 0, 1024, 1024)
     var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
     var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
-    var time = this.object.Time;
+    var time = slider1.object.Time;
     data = mapColor(imdata, imdataOriginalDose, time)
+    root.children[0].material.map.image.data = data
+    root.children[0].material.map.needsUpdate = true
 })
 
 dropdown2.onChange(function () {
@@ -51,6 +54,7 @@ dropdown2.onChange(function () {
     if (model[1].Assets.length>0) {
         loadNewAssets(id)
     }
+    
 })
 
 slider1.onChange(function () {
@@ -157,6 +161,7 @@ function loadNewModel(id) {
                 o.material.map = texture
             }
         });
+        
         scene.add(root)
         //render single frame
         renderer.render(scene, camera)
