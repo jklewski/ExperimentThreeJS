@@ -7,7 +7,6 @@ colorMap = function(name){
     for (let k = 0; k<database.length; k++) {
         allNames[k] = database[k].name[0]
         if (name == allNames[k]) {ind = k}
-
     }
     var nMonths = database[ind].R.length/2; //number of months
     var colorData = { "R": database[ind].R, "G": database[ind].G, "B": database[ind].B, "Name": database[ind].name}
@@ -46,9 +45,9 @@ colorMap = function(name){
     return [wclr,allNames]
     }
 
-function mapColor(imdata,imdataOriginalDose,time) {
-    const width = 1024;
-    const height = 1024;
+function mapColor(imdata,imdataOriginalDose,time,res) {
+    const width = res;
+    const height = res;
     const size = width * height;
     var data = new Uint8Array(4 * size);
     var value = [];
