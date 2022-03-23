@@ -92,13 +92,31 @@ const scene = new THREE.Scene()
     scene.background = skyTexture;
   }
 
-//light
-var hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
-scene.add(hemLight);
-const light = new THREE.PointLight(0xffffff, 5, 100);
-light.position.set(50, 50, 50);
-scene.add(light);
+  const planeGeometry = new THREE.PlaneGeometry(100, 100)
+  const plane = new THREE.Mesh(planeGeometry, new THREE.MeshPhongMaterial())
+  plane.rotateX(-Math.PI / 2)
+  plane.position.y = -1.15
+  plane.receiveShadow = true
+  scene.add(plane)
 
+//lights
+const light = new THREE.DirectionalLight( 0xddffdd, 0.6 );
+light.position.set( 5, 5, 5 );
+light.castShadow = true;
+light.shadow.mapSize.width = 1024;
+light.shadow.mapSize.height = 1024;
+
+const d = 5;
+light.shadow.camera.left = - d;
+light.shadow.camera.right = d;
+light.shadow.camera.top = d;
+light.shadow.camera.bottom = - d;
+light.shadow.camera.near = 0.5;
+light.shadow.camera.far = 500;
+scene.add( light );
+scene.add( new THREE.AmbientLight( 0xaaaaaa, 0.2 ) );
+const helper = new  THREE.CameraHelper(light.shadow.camera)
+scene.add(helper)
 //window size
 const canvasContainer = document.getElementById('modelContainer')
 const sizes = {
@@ -121,6 +139,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(sizes.width, sizes.height)
 //renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 //create orbit controls
 const controls = new OrbitControls(camera, renderer.domElement);
 
@@ -174,12 +193,23 @@ function loadNewModel(id) {
     loader.load('./assets/' + model[id].Model, function (glb) {
         console.log(glb)
         root = glb.scene;
+        root.traverse(function(child){
+            if (child.isMesh) {
+                //child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        })
+        //cast and receive shadows
+        //root.castShadow = true;
+        root.receiveShadow = true;
         //adjust scale to fit canvas
         root.scale.set(1, 1, 1)
         //add object to scene
-        root.traverse((o) => {
-            if (o.isMesh) {
-                o.material.map = texture
+        root.traverse((child) => {
+            if (child.isMesh) {
+                child.material.map = texture
+                child.castShadow = true;
+                child.receiveShadow = true;
             }
         });
         
@@ -200,6 +230,12 @@ var loader2 = new GLTFLoader()
 loader2.load('./assets/'+model[id].Assets, function (glb) {
     console.log(glb)
     root2 = glb.scene;
+    root2.traverse(function(child){
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    })
     //adjust scale to fit canvas
     root2.scale.set(1, 1, 1)
     //add object to scene
