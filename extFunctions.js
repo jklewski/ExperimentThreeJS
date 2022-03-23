@@ -56,9 +56,9 @@ function mapColor(imdata,imdataOriginalDose,time,res) {
         value = (time/100) * (imdataOriginalDose[i]/255) * 20
         let idHigh = imdata.data[i] + 255 * Math.ceil(value)
         let idLow = imdata.data[i] + 255 * Math.floor(value)
-        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
-        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,2.2)*255;
+        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,1)*255;
+        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,1)*255;
+        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,1)*255;
         data[i + 3] = 255
     }
     return data

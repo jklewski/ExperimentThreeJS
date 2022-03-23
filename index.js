@@ -21,7 +21,7 @@ model[1] = {Texture:'InnoRenewTextures.png',
 model[2] = {Texture:'Lekstuga_Texture.png',
             Dosemap:'Lekstuga_Dosemap.png',
             Model:'Lekstuga_1.glb',
-            Assets:[]}
+            Assets:'Lekstuga_1_assets.glb'}
 
 // create gui
 var gui = new dat.GUI({ autoPlace: false, width: 500 });
@@ -81,7 +81,7 @@ const scene = new THREE.Scene()
 
 {
     const loader = new THREE.CubeTextureLoader();
-    const texture = loader.load([
+    const skyTexture = loader.load([
       './assets/clouds1/clouds1_east.bmp',
       './assets/clouds1/clouds1_west.bmp',
       './assets/clouds1/clouds1_up.bmp',
@@ -89,7 +89,7 @@ const scene = new THREE.Scene()
       './assets/clouds1/clouds1_north.bmp',
       './assets/clouds1/clouds1_south.bmp',
     ]);
-    scene.background = texture;
+    scene.background = skyTexture;
   }
 
 //light
@@ -107,14 +107,16 @@ const sizes = {
 }
 //create and configure camera
 
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(60, sizes.width / sizes.height, 0.1, 100)
 camera.position.set(5, 1, 1)
 
 scene.add(camera)
 //create and configure renderer
 const renderer = new THREE.WebGL1Renderer({
     canvas: canvas,
+    antialias: true
 })
+renderer.outputEncoding = THREE.sRGBEncoding;
 //renderer.setClearColor( 0xffffff, 1);
 renderer.setSize(sizes.width, sizes.height)
 //renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -157,7 +159,9 @@ function loadNewTexture(id) {
         data = mapColor(imdata, imdataOriginalDose, time,res);
         texture = new THREE.DataTexture(data, res, res);
         texture.flipY = false
+        texture.encoding = THREE.sRGBEncoding //?????
         texture.needsUpdate = true;
+        
     }
     image.src = "./assets/" + model[id].Texture
 }
