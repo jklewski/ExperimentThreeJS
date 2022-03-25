@@ -114,7 +114,7 @@ light.shadow.camera.bottom = - d;
 light.shadow.camera.near = 0.5;
 light.shadow.camera.far = 500;
 scene.add( light );
-scene.add( new THREE.AmbientLight( 0xaaaaaa, 0.2 ) );
+scene.add( new THREE.AmbientLight( 0xaaaaaa, 0.6 ) );
 const helper = new  THREE.CameraHelper(light.shadow.camera)
 scene.add(helper)
 //window size
@@ -134,7 +134,7 @@ const renderer = new THREE.WebGL1Renderer({
     canvas: canvas,
     antialias: true
 })
-renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.Encoding = THREE.LinearEncoding;
 //renderer.setClearColor( 0xffffff, 1);
 renderer.setSize(sizes.width, sizes.height)
 //renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
