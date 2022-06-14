@@ -1,10 +1,12 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.120.0/build/three.module.js'
 import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/controls/OrbitControls.js'
+import { RGBELoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/RGBELoader.js'
 //initiate some global variables
 var root = [] //main 3dobject
 var root2 = [] //secondary 3dobjects
 var texture = []
+var bumpTexture = []
 var imdataDose = []
 var imdataOriginalDose = []
 var res = 1024 * 2;
@@ -32,7 +34,7 @@ model[2] = {
     Model: 'Lekstuga_1.glb',
     Assets: 'Lekstuga_1_assets.glb',
     CameraPos: [5, 1, 1, -1.5, 1.5, 1.5],
-    zmin: [-1.15]
+    zmin: [-1]
 }
 
 // create gui
@@ -91,26 +93,20 @@ const canvas = document.querySelector('.webgl')
 //start scene
 const scene = new THREE.Scene()
 
-{
-    const loader = new THREE.CubeTextureLoader();
-    const skyTexture = loader.load([
-        './assets/clouds1/clouds1_east.bmp',
-        './assets/clouds1/clouds1_west.bmp',
-        './assets/clouds1/clouds1_up.bmp',
-        './assets/clouds1/clouds1_down.bmp',
-        './assets/clouds1/clouds1_north.bmp',
-        './assets/clouds1/clouds1_south.bmp',
-    ]);
-    scene.background = skyTexture;
-}
-/*new RGBELoader()
-					.setPath( 'textures/equirectangular/' )
-					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+new RGBELoader()
+					.setPath( 'assets/' )
+					.load( 'noon_grass_2k.hdr', function ( texture ) {
 						texture.mapping = THREE.EquirectangularReflectionMapping;
 						scene.background = texture;
 						scene.environment = texture;
-						render();
-*/
+						// model
+						const loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
+						loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
+							scene.add( gltf.scene );
+						} );
+
+					} );
+
 const geometry = new THREE.SphereGeometry(200, 64, 32, 1.5, 1, 1.1, 1.3);
 geometry.rotateX(-Math.PI / 1.9)
 geometry.rotateZ(Math.PI / 7)
@@ -140,7 +136,7 @@ light.shadow.camera.bottom = - d;
 light.shadow.camera.near = 0.5;
 light.shadow.camera.far = 500;
 scene.add(light);
-scene.add(new THREE.AmbientLight(0x404040, 5));
+scene.add(new THREE.AmbientLight(0x404040, 3));
 
 const helper = new THREE.CameraHelper(light.shadow.camera)
 //scene.add(helper)
@@ -211,6 +207,14 @@ function loadNewTexture(id) {
         texture.flipY = false
         texture.encoding = THREE.sRGBEncoding 
         texture.needsUpdate = true;
+        //get BW image for bumpmap
+        var BW = new Uint8Array(1 * res * res);
+        for (let j = 0; j<BW.length;j++){
+            BW[j]=(data[j]+data[j+1]+data[j+2])/3
+        }
+        bumpTexture = new THREE.DataTexture(BW, res, res);
+        bumpTexture.flipY = false
+        
 
     }
     image.src = "./assets/" + model[id].Texture
@@ -241,6 +245,8 @@ function loadNewModel(id) {
         root.traverse((child) => {
             if (child.isMesh) {
                 child.material.map = texture
+                child.material.bumpMap = texture
+                child.material.roughness = 3
                 child.castShadow = true;
                 child.receiveShadow = true;
             }
