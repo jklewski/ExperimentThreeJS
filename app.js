@@ -7,29 +7,41 @@ var root2 = [] //secondary 3dobjects
 var texture = []
 var imdataDose = []
 var imdataOriginalDose = []
-var res = 1024*2;
+var res = 1024 * 2;
 //define model variations
 var model = [];
-model[0] = {Texture:'WallTextures.png',
-            Dosemap:'WallDoseMap.png',
-            Model:'WallModel.glb',
-            Assets:[]}
-model[1] = {Texture:'InnoRenewTextures.png',
-            Dosemap:'InnoRenewDoseMap.jpg',
-            Model:'InnoRenewHouse.glb',
-            Assets:'InnoRenewHouse_misc.glb'}
-model[2] = {Texture:'Lekstuga_Texture.png',
-            Dosemap:'Lekstuga_Dosemap.png',
-            Model:'Lekstuga_1.glb',
-            Assets:'Lekstuga_1_assets.glb'}
+model[0] = {
+    Texture: 'WallTextures.png',
+    Dosemap: 'WallDoseMap.png',
+    Model: 'WallModel.glb',
+    Assets: [],
+    CameraPos: [2.5, 0.22, 0.0028, -1.5, 1.5, 1.5],
+    zmin: [-1]
+}
+model[1] = {
+    Texture: 'InnoRenewTextures.png',
+    Dosemap: 'InnoRenewDoseMap.jpg',
+    Model: 'InnoRenewHouse.glb',
+    Assets: 'InnoRenewHouse_misc.glb',
+    CameraPos: [-15, 8, 14.5, -1.5, 1.5, 1.5],
+    zmin: [-0]
+}
+model[2] = {
+    Texture: 'Lekstuga_Texture.png',
+    Dosemap: 'Lekstuga_Dosemap.png',
+    Model: 'Lekstuga_1.glb',
+    Assets: 'Lekstuga_1_assets.glb',
+    CameraPos: [5, 1, 1, -1.5, 1.5, 1.5],
+    zmin: [-1.15]
+}
 
 // create gui
-var gui = new dat.GUI({ autoPlace: false, width: 500 });
+var gui = new dat.GUI({ autoPlace: false, width: 400 });
 gui.domElement.id = 'gui';
 gui_container.appendChild(gui.domElement);
 // add a range controller
 var weathering = { Time: 0 };
-var species = { Product: allNames[0]};
+var species = { Product: allNames[0] };
 var models = { Model: 'Wall Model' };
 var slider1 = gui.add(weathering, 'Time', 0, 100);
 var dropdown1 = gui.add(species, 'Product', allNames)
@@ -43,24 +55,24 @@ dropdown1.onChange(function () {
     var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
     var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
     var time = slider1.object.Time;
-    data = mapColor(imdata, imdataOriginalDose, time,res)
+    data = mapColor(imdata, imdataOriginalDose, time, res)
     root.children[0].material.map.image.data = data
     root.children[0].material.map.needsUpdate = true
 })
 
 dropdown2.onChange(function () {
     scene.remove(root)
-    scene.remove(root2)    
-    if (dropdown2.object.Model == 'Wall Model') {var id = 0}
-    if (dropdown2.object.Model == 'InnoRenew House') {var id = 1}
-    if (dropdown2.object.Model == 'Lekstuga') {var id = 2}
+    scene.remove(root2)
+    if (dropdown2.object.Model == 'Wall Model') { var id = 0 }
+    if (dropdown2.object.Model == 'InnoRenew House') { var id = 1 }
+    if (dropdown2.object.Model == 'Lekstuga') { var id = 2 }
     loadNewTexture(id)
-    loadNewModel(id)  
+    loadNewModel(id)
     //load any other assets if available
-    if (model[1].Assets.length>0) {
+    if (model[1].Assets.length > 0) {
         loadNewAssets(id)
     }
-    
+
 })
 
 slider1.onChange(function () {
@@ -69,7 +81,7 @@ slider1.onChange(function () {
     var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height)
     var imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); //clone original imdata
     var time = this.object.Time;
-    data = mapColor(imdata, imdataOriginalDose, time,res)
+    data = mapColor(imdata, imdataOriginalDose, time, res)
     root.children[0].material.map.image.data = data
     root.children[0].material.map.needsUpdate = true
 })
@@ -82,41 +94,56 @@ const scene = new THREE.Scene()
 {
     const loader = new THREE.CubeTextureLoader();
     const skyTexture = loader.load([
-      './assets/clouds1/clouds1_east.bmp',
-      './assets/clouds1/clouds1_west.bmp',
-      './assets/clouds1/clouds1_up.bmp',
-      './assets/clouds1/clouds1_down.bmp',
-      './assets/clouds1/clouds1_north.bmp',
-      './assets/clouds1/clouds1_south.bmp',
+        './assets/clouds1/clouds1_east.bmp',
+        './assets/clouds1/clouds1_west.bmp',
+        './assets/clouds1/clouds1_up.bmp',
+        './assets/clouds1/clouds1_down.bmp',
+        './assets/clouds1/clouds1_north.bmp',
+        './assets/clouds1/clouds1_south.bmp',
     ]);
     scene.background = skyTexture;
-  }
+}
+/*new RGBELoader()
+					.setPath( 'textures/equirectangular/' )
+					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+						texture.mapping = THREE.EquirectangularReflectionMapping;
+						scene.background = texture;
+						scene.environment = texture;
+						render();
+*/
+const geometry = new THREE.SphereGeometry(200, 64, 32, 1.5, 1, 1.1, 1.3);
+geometry.rotateX(-Math.PI / 1.9)
+geometry.rotateZ(Math.PI / 7)
 
-  const planeGeometry = new THREE.PlaneGeometry(100, 100)
-  const plane = new THREE.Mesh(planeGeometry, new THREE.MeshPhongMaterial())
-  plane.rotateX(-Math.PI / 2)
-  plane.position.y = -1.15
-  plane.receiveShadow = true
-  scene.add(plane)
+const material = new THREE.MeshPhongMaterial({
+    color: 'rgb(10%,30%,10%)',
+    wireframe: false,
+});
+
+const plane = new THREE.Mesh(geometry, material);
+plane.receiveShadow= true
+plane.position.set(0,-201,0)
+scene.add(plane);
+
 
 //lights
-const light = new THREE.DirectionalLight( 0xddffdd, 0.6 );
-light.position.set( 5, 5, 5 );
+const light = new THREE.DirectionalLight(0xddffdd, 0.6);
+light.position.set(10, 10, 10);
 light.castShadow = true;
 light.shadow.mapSize.width = 1024;
 light.shadow.mapSize.height = 1024;
-
-const d = 5;
+const d = 10;
 light.shadow.camera.left = - d;
 light.shadow.camera.right = d;
 light.shadow.camera.top = d;
 light.shadow.camera.bottom = - d;
 light.shadow.camera.near = 0.5;
 light.shadow.camera.far = 500;
-scene.add( light );
-scene.add( new THREE.AmbientLight( 0xaaaaaa, 0.6 ) );
-const helper = new  THREE.CameraHelper(light.shadow.camera)
-scene.add(helper)
+scene.add(light);
+scene.add(new THREE.AmbientLight(0x404040, 5));
+
+const helper = new THREE.CameraHelper(light.shadow.camera)
+//scene.add(helper)
 //window size
 const canvasContainer = document.getElementById('modelContainer')
 const sizes = {
@@ -126,18 +153,20 @@ const sizes = {
 //create and configure camera
 
 const camera = new THREE.PerspectiveCamera(60, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(5, 1, 1)
-
+camera.position.set(2.23, 0.18, 0.007)
+//camera.position.set(5, 1, 1)
 scene.add(camera)
+
 //create and configure renderer
 const renderer = new THREE.WebGL1Renderer({
     canvas: canvas,
     antialias: true
 })
-renderer.Encoding = THREE.LinearEncoding;
-//renderer.setClearColor( 0xffffff, 1);
+
+
+renderer.outputEncoding = THREE.sRGBEncoding
+renderer.physicallyCorrectLights = true
 renderer.setSize(sizes.width, sizes.height)
-//renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -161,13 +190,13 @@ var ctxDose = canvasDose.getContext("2d");
 function loadNewTexture(id) {
     //clear both canvas
     ctx.clearRect(0, 0, res, res);
-    ctxDose.clearRect(0, 0, res, res); 
+    ctxDose.clearRect(0, 0, res, res);
     //Draw dosemap on canvas
     var imageDose = new Image()
     imageDose.onload = function () {
         ctxDose.drawImage(imageDose, 0, 0, res, res);
     }
-    imageDose.src = './assets/'+model[id].Dosemap;
+    imageDose.src = './assets/' + model[id].Dosemap;
     //Draw texture on canvas, calculate color and create texture
     var image = new Image()
     image.onload = function () {
@@ -175,14 +204,14 @@ function loadNewTexture(id) {
         var data = new Uint8Array(4 * res * res);
         var imdata = ctx.getImageData(0, 0, res, res);
         var imdataDose = ctxDose.getImageData(0, 0, canvasDose.width, canvasDose.height);
-        imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data); 
+        imdataOriginalDose = Uint8ClampedArray.from(imdataDose.data);
         var time = 0;
-        data = mapColor(imdata, imdataOriginalDose, time,res);
+        data = mapColor(imdata, imdataOriginalDose, time, res);
         texture = new THREE.DataTexture(data, res, res);
         texture.flipY = false
-        texture.encoding = THREE.sRGBEncoding //?????
+        texture.encoding = THREE.sRGBEncoding 
         texture.needsUpdate = true;
-        
+
     }
     image.src = "./assets/" + model[id].Texture
 }
@@ -195,12 +224,14 @@ function loadNewModel(id) {
     loader.load('./assets/' + model[id].Model, function (glb) {
         console.log(glb)
         root = glb.scene;
-        root.traverse(function(child){
+        root.traverse(function (child) {
             if (child.isMesh) {
                 //child.castShadow = true;
                 child.receiveShadow = true;
             }
         })
+        camera.position.set(model[id].CameraPos[0], model[id].CameraPos[1], model[id].CameraPos[2])
+        camera.rotation.set(model[id].CameraPos[3], model[id].CameraPos[4], model[id].CameraPos[5])
         //cast and receive shadows
         //root.castShadow = true;
         root.receiveShadow = true;
@@ -214,8 +245,12 @@ function loadNewModel(id) {
                 child.receiveShadow = true;
             }
         });
-        
+
         scene.add(root)
+        //change location of baseplane
+        scene.children[0].position.y = model[id].zmin[0] -200
+
+
         //render single frame
         renderer.render(scene, camera)
         //some extra arguments for loader...
@@ -228,21 +263,22 @@ function loadNewModel(id) {
 loadNewModel(0)
 
 function loadNewAssets(id) {
-var loader2 = new GLTFLoader()
-loader2.load('./assets/'+model[id].Assets, function (glb) {
-    console.log(glb)
-    root2 = glb.scene;
-    root2.traverse(function(child){
-        if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-        }
+    var loader2 = new GLTFLoader()
+    loader2.load('./assets/' + model[id].Assets, function (glb) {
+        console.log(glb)
+        root2 = glb.scene;
+        root2.traverse(function (child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        })
+        //adjust scale to fit canvas
+        root2.scale.set(1, 1, 1)
+        //add object to scene
+        scene.add(root2)
+
     })
-    //adjust scale to fit canvas
-    root2.scale.set(1, 1, 1)
-    //add object to scene
-    scene.add(root2)
-})
 }
 
 function resizeCanvasToDisplaySize() {

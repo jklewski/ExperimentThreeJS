@@ -25,6 +25,12 @@ canvas {
     margin: auto;
 }
 
+#gui_container {
+    left: 10px;
+    width:fit-content;
+    height:fit-content;    
+    position:absolute;
+}
 
 #modelContainer {
     width: 100%;
