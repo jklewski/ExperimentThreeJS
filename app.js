@@ -1,7 +1,9 @@
-import * as THREE from 'https://cdn.skypack.dev/three@0.120.0/build/three.module.js'
-import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/GLTFLoader.js'
-import { OrbitControls } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/controls/OrbitControls.js'
-import { RGBELoader } from 'https://cdn.skypack.dev/three@0.120.0/examples/jsm/loaders/RGBELoader.js'
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+
 //initiate some global variables
 var root = [] //main 3dobject
 var root2 = [] //secondary 3dobjects
@@ -86,6 +88,16 @@ slider1.onChange(function () {
     data = mapColor(imdata, imdataOriginalDose, time, res)
     root.children[0].material.map.image.data = data
     root.children[0].material.map.needsUpdate = true
+    //root.children[0].material.map.encoding = THREE.sRGBEncoding
+    
+    //texture.image.data.map(x => x*100/time)
+    //newTexture = texture
+    //newTexture.image.data.map(x => x*time/100)
+    //root.traverse((child) => {
+    //    if (child.isMesh) {
+    //        child.material.bumpMap = newTexture
+    //    }})
+    
 })
 
 //select canvas from index.html
@@ -97,13 +109,11 @@ new RGBELoader()
 					.setPath( 'assets/' )
 					.load( 'noon_grass_2k.hdr', function ( texture ) {
 						texture.mapping = THREE.EquirectangularReflectionMapping;
-						scene.background = texture;
-						scene.environment = texture;
+                        
+						scene.background = new THREE.Color(0xcccccc);
+						//scene.environment = texture;
 						// model
-						const loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
-						loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
-							scene.add( gltf.scene );
-						} );
+
 
 					} );
 
@@ -112,7 +122,7 @@ geometry.rotateX(-Math.PI / 1.9)
 geometry.rotateZ(Math.PI / 7)
 
 const material = new THREE.MeshPhongMaterial({
-    color: 'rgb(10%,30%,10%)',
+    color: 'rgb(100%,100%,100%)',
     wireframe: false,
 });
 
@@ -120,14 +130,17 @@ const plane = new THREE.Mesh(geometry, material);
 plane.receiveShadow= true
 plane.position.set(0,-201,0)
 scene.add(plane);
+scene.fog = new THREE.Fog( 0xcccccc, 10, 20 );
 
 
 //lights
-const light = new THREE.DirectionalLight(0xddffdd, 0.6);
+const light = new THREE.DirectionalLight(0xffffff, 0.6);
+
+//light.shadow.bias = -0.005
 light.position.set(10, 10, 10);
 light.castShadow = true;
-light.shadow.mapSize.width = 1024;
-light.shadow.mapSize.height = 1024;
+light.shadow.mapSize.width = 4048;
+light.shadow.mapSize.height = 4048;
 const d = 10;
 light.shadow.camera.left = - d;
 light.shadow.camera.right = d;
@@ -136,7 +149,7 @@ light.shadow.camera.bottom = - d;
 light.shadow.camera.near = 0.5;
 light.shadow.camera.far = 500;
 scene.add(light);
-scene.add(new THREE.AmbientLight(0x404040, 3));
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
 const helper = new THREE.CameraHelper(light.shadow.camera)
 //scene.add(helper)
@@ -156,17 +169,19 @@ scene.add(camera)
 //create and configure renderer
 const renderer = new THREE.WebGL1Renderer({
     canvas: canvas,
-    antialias: true
+    antialias: true,
 })
 
 
-renderer.outputEncoding = THREE.sRGBEncoding
-renderer.physicallyCorrectLights = true
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace
+renderer.outputColorspaceEncoding = THREE.LinearSRGBColorSpace
+//renderer.physicallyCorrectLights = true
 renderer.setSize(sizes.width, sizes.height)
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
-renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1
+//renderer.toneMapping = THREE.ACESFilmicToneMapping
+//renderer.toneMappingExposure = 1
+
 //create orbit controls
 const controls = new OrbitControls(camera, renderer.domElement);
 
@@ -179,8 +194,6 @@ var canvasDose = document.createElement("canvas");
 canvasDose.width = res;
 canvasDose.height = res;
 var ctxDose = canvasDose.getContext("2d");
-//add canvas to body if inspect 
-//document.body.appendChild(canvasTemp) //This is only shown in dev
 
 //Create function for loading a new texture (and run once)
 function loadNewTexture(id) {
@@ -205,17 +218,8 @@ function loadNewTexture(id) {
         data = mapColor(imdata, imdataOriginalDose, time, res);
         texture = new THREE.DataTexture(data, res, res);
         texture.flipY = false
-        texture.encoding = THREE.sRGBEncoding 
+        texture.colorSpace = THREE.LinearSRGBColorSpace
         texture.needsUpdate = true;
-        //get BW image for bumpmap
-        var BW = new Uint8Array(1 * res * res);
-        for (let j = 0; j<BW.length;j++){
-            BW[j]=(data[j]+data[j+1]+data[j+2])/3
-        }
-        bumpTexture = new THREE.DataTexture(BW, res, res);
-        bumpTexture.flipY = false
-        
-
     }
     image.src = "./assets/" + model[id].Texture
 }
@@ -223,14 +227,13 @@ loadNewTexture(0)
 
 //Create function for loading a new model (and run once)
 function loadNewModel(id) {
-
     var loader = new GLTFLoader()
     loader.load('./assets/' + model[id].Model, function (glb) {
         console.log(glb)
         root = glb.scene;
         root.traverse(function (child) {
             if (child.isMesh) {
-                //child.castShadow = true;
+                child.castShadow = true;
                 child.receiveShadow = true;
             }
         })
@@ -238,7 +241,7 @@ function loadNewModel(id) {
         camera.rotation.set(model[id].CameraPos[3], model[id].CameraPos[4], model[id].CameraPos[5])
         //cast and receive shadows
         //root.castShadow = true;
-        root.receiveShadow = true;
+        //root.receiveShadow = true;
         //adjust scale to fit canvas
         root.scale.set(1, 1, 1)
         //add object to scene
@@ -246,17 +249,19 @@ function loadNewModel(id) {
             if (child.isMesh) {
                 child.material.map = texture
                 child.material.bumpMap = texture
-                child.material.roughness = 3
+                //child.material.bumpScale = 0.1
+                //child.material.normalMap = texture
+                //child.material.normalScale.x = 5
+
+                child.material.roughness = 1
                 child.castShadow = true;
                 child.receiveShadow = true;
+
             }
         });
-
         scene.add(root)
         //change location of baseplane
         scene.children[0].position.y = model[id].zmin[0] -200
-
-
         //render single frame
         renderer.render(scene, camera)
         //some extra arguments for loader...
@@ -283,7 +288,6 @@ function loadNewAssets(id) {
         root2.scale.set(1, 1, 1)
         //add object to scene
         scene.add(root2)
-
     })
 }
 
@@ -310,5 +314,8 @@ function animate() {
     requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
+
+    
+
 }
 animate()

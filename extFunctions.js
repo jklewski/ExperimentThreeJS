@@ -21,7 +21,7 @@ colorMap = function(name){
         var lwR = colorData.R[(j * 2)]
         var ewR = colorData.R[(1 + j * 2)]
         var colorTemp = [];
-        for (let i = 0; i < 256; i++) {
+        for (let i = 0; i < 256; i++) { //for unknown reason, I upsample the colordata by factor of 256. This is probably to get the max possible resolution of color, but quite unnecessary. 
             var diff = (ewR - lwR) / 255
             colorTemp[i] = lwR + diff * i
         }
@@ -62,10 +62,15 @@ function mapColor(imdata,imdataOriginalDose,time,res) {
         value = (time/100) * (imdataOriginalDose[i]/255) * 20
         let idHigh = imdata.data[i] + 255 * Math.ceil(value)
         let idLow = imdata.data[i] + 255 * Math.floor(value)
-        data[i] = Math.pow((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255,1)*255;
-        data[i + 1] = Math.pow((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255,1)*255;
-        data[i + 2] = Math.pow((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255,1)*255;
+        data[i] = ((wclr.R[idLow] + (wclr.R[idHigh] - wclr.R[idLow]) * (value - Math.floor(value)))/255)*255;
+        data[i + 1] = ((wclr.G[idLow] + (wclr.G[idHigh] - wclr.G[idLow]) * (value - Math.floor(value)))/255)*255;
+        data[i + 2] = ((wclr.B[idLow] + (wclr.B[idHigh] - wclr.B[idLow]) * (value - Math.floor(value)))/255)*255;
         data[i + 3] = 255
+        if (imdata.data[i] < 5 && imdata.data[i+1] < 5 && imdata.data[i+2] < 5) {
+            data[i] = 5
+            data[i+1] = 5 
+            data[i+2] = 5
+        }
     }
     return data
 }
